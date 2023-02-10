@@ -8,7 +8,7 @@
 # appropriately set for your system!
 
 # The user and group that own the CLOUDLOG_SUBDIR directories. Passed to 'chown' as-is.
-DIR_OWNERSHIP="root:www-data"
+DIR_OWNERSHIP="root:apache"
 # The list of directories that need to have ownership restored after a git pull
 declare -a CLOUDLOG_SUBDIRS=("application/config" "assets" "backup" "updates" "uploads")
 # The name of the Git remote to fetch/pull from
