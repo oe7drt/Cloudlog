@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 # Cloudlog update script
 #
 # Pulls changes from Git remote and re-sets appropriate directory ownership.
@@ -8,7 +8,7 @@
 # appropriately set for your system!
 
 # The user and group that own the CLOUDLOG_SUBDIR directories. Passed to 'chown' as-is.
-DIR_OWNERSHIP="root:apache"
+DIR_OWNERSHIP="root:www"
 # The list of directories that need to have ownership restored after a git pull
 declare -a CLOUDLOG_SUBDIRS=("application/config" "assets" "backup" "updates" "uploads")
 # The name of the Git remote to fetch/pull from
