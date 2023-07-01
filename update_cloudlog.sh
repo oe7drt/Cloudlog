@@ -12,9 +12,9 @@ DIR_OWNERSHIP="root:www"
 # The list of directories that need to have ownership restored after a git pull
 declare -a CLOUDLOG_SUBDIRS=("application/config" "assets" "backup" "updates" "uploads")
 # The name of the Git remote to fetch/pull from
-GIT_REMOTE="origin"
+GIT_REMOTE="upstream"
 # If true, pull from the HEAD of the configured origin, otherwise the latest tag
-BLEEDING_EDGE="true"
+BLEEDING_EDGE="false"
 # If true, restore directory ownership on CLOUDLOG_SUBDIRS after a git pull
 RESTORE_OWNERSHIP="true"
 
