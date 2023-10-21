@@ -2,11 +2,8 @@
 use Cloudlog\QSLManager\QSO;
 
 class Logbookadvanced_model extends CI_Model {
-  /*
-   * @param array $searchCriteria
-   * @return array
-   */
-  public function searchQsos($searchCriteria) : array {
+
+	public function searchDb($searchCriteria) {
 		$conditions = [];
 		$binding = [$searchCriteria['user_id']];
 
@@ -86,19 +83,19 @@ class Logbookadvanced_model extends CI_Model {
 		}
 
 		if ($searchCriteria['eqslSent'] !== '') {
-			$condition = "COL_EQSL_SENT = ?";
+			$condition = "COL_EQSL_QSL_SENT = ?";
 			if ($searchCriteria['eqslSent'] == 'N') {
 				$condition = '('.$condition;
-				$condition .= " OR COL_EQSL_SENT IS NULL OR COL_EQSL_SENT = '')";
+				$condition .= " OR COL_EQSL_QSL_SENT IS NULL OR COL_EQSL_QSL_SENT = '')";
 			}
 			$conditions[] = $condition;
 			$binding[] = $searchCriteria['eqslSent'];
 		}
 		if ($searchCriteria['eqslReceived'] !== '') {
-			$condition = "COL_EQSL_RCVD = ?";
+			$condition = "COL_EQSL_QSL_RCVD = ?";
 			if ($searchCriteria['eqslReceived'] == 'N') {
 				$condition = '('.$condition;
-				$condition .= " OR COL_EQSL_RCVD IS NULL OR COL_EQSL_RCVD = '')";
+				$condition .= " OR COL_EQSL_QSL_RCVD IS NULL OR COL_EQSL_QSL_RCVD = '')";
 			}
 			$conditions[] = $condition;
 			$binding[] = $searchCriteria['eqslReceived'];
@@ -161,12 +158,27 @@ class Logbookadvanced_model extends CI_Model {
                 }
         }
 
+		if (($searchCriteria['ids'] ?? '') !== '') {
+			$conditions[] = "qsos.COL_PRIMARY_KEY in (".implode(",",$searchCriteria['ids']).")";
+		}
+
 		$where = trim(implode(" AND ", $conditions));
 		if ($where != "") {
 			$where = "AND $where";
 		}
 
 		$limit = $searchCriteria['qsoresults'];
+
+		$where2 = '';
+
+		if ($searchCriteria['qslimages'] !== '') {
+			if ($searchCriteria['qslimages'] == 'Y') {
+				$where2 .= ' and x.qslcount > "0"';
+			}
+			if ($searchCriteria['qslimages'] == 'N') {
+				$where2 .= ' and x.qslcount is null';
+			}
+		}
 
 		$sql = "
 			SELECT *
@@ -181,6 +193,7 @@ class Logbookadvanced_model extends CI_Model {
 			) x on qsos.COL_PRIMARY_KEY = x.qsoid
 			WHERE station_profile.user_id =  ?
 			$where
+			$where2
 			ORDER BY qsos.COL_TIME_ON desc, qsos.COL_PRIMARY_KEY desc
 			LIMIT $limit
 		";
@@ -189,12 +202,22 @@ class Logbookadvanced_model extends CI_Model {
 
         $results = $data->result('array');
 
+		return $results;
+	}
+
+  /*
+   * @param array $searchCriteria
+   * @return array
+   */
+  public function searchQsos($searchCriteria) : array {
+		$results = $this->searchDb($searchCriteria);
+
         $qsos = [];
         foreach ($results as $data) {
             $qsos[] = new QSO($data);
         }
 
-	    return $qsos;
+		return $qsos;
 	}
 
     public function getQsosForAdif($ids, $user_id, $sortorder = null) : object {
@@ -391,4 +414,19 @@ class Logbookadvanced_model extends CI_Model {
 
 		return $modes;
 	}
+
+	function getQslsForQsoIds($ids) {
+		$CI =& get_instance();
+        $CI->load->model('logbooks_model');
+        $logbooks_locations_array = $CI->logbooks_model->list_logbook_relationships($this->session->userdata('active_station_logbook'));
+
+        $this->db->select('*');
+		$this->db->from($this->config->item('table_name'));
+        $this->db->join('qsl_images', 'qsl_images.qsoid = ' . $this->config->item('table_name') . '.col_primary_key');
+        $this->db->where_in('qsoid', $ids);
+		$this->db->where_in('station_id', $logbooks_locations_array);
+        $this->db->order_by("id", "desc");
+
+        return $this->db->get()->result();
+    }
 }

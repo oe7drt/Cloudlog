@@ -1,5 +1,81 @@
 $( document ).ready(function() {
 
+var favs={};
+	get_fav();
+
+	$('#fav_add').click(function (event) {
+		save_fav();
+	});
+
+	$(document).on("click", "#fav_del", function (event) {
+		del_fav($(this).attr('name'));
+	});
+
+	$(document).on("click", "#fav_recall", function (event) {
+		$('#sat_name').val(favs[this.innerText].sat_name);
+		$('#sat_mode').val(favs[this.innerText].sat_mode);
+		$('#band_rx').val(favs[this.innerText].band_rx);
+		$('#band').val(favs[this.innerText].band);
+		$('#frequency_rx').val(favs[this.innerText].frequency_rx);
+		$('#frequency').val(favs[this.innerText].frequency);
+		$('#selectPropagation').val(favs[this.innerText].prop_mode);
+		$('#mode').val(favs[this.innerText].mode);
+	});
+
+
+	function del_fav(name) {
+		if (confirm("Are you sure to delete Fav?")) {
+			$.ajax({
+				url: base_url+'index.php/user_options/del_fav',
+				method: 'POST',
+				dataType: 'json',
+				contentType: "application/json; charset=utf-8",
+				data: JSON.stringify({ "option_name": name }),
+				success: function(result) {
+					get_fav();
+				}
+			});
+		}
+	}
+
+	function get_fav() {
+		$.ajax({
+			url: base_url+'index.php/user_options/get_fav',
+			method: 'GET',
+			dataType: 'json',
+			contentType: "application/json; charset=utf-8",
+			success: function(result) {
+				$("#fav_menu").empty();
+				for (const key in result) {
+					$("#fav_menu").append('<label class="dropdown-item"><span id="fav_del" name="'+key+'"><i class="fas fa-trash-alt"></i></span>&nbsp;&nbsp;<span id="fav_recall">'+key+'</span></label>');
+				}
+				favs=result;
+			}
+		});
+	}
+
+	function save_fav() {
+		var payload={};
+		payload.sat_name=$('#sat_name').val();
+		payload.sat_mode=$('#sat_mode').val();
+		payload.band_rx=$('#band_rx').val();
+		payload.band=$('#band').val();
+		payload.frequency_rx=$('#frequency_rx').val();
+		payload.frequency=$('#frequency').val();
+		payload.prop_mode=$('#selectPropagation').val();
+		payload.mode=$('#mode').val();
+		$.ajax({
+			url: base_url+'index.php/user_options/add_edit_fav',
+			method: 'POST',
+			dataType: 'json',
+			contentType: "application/json; charset=utf-8",
+			data: JSON.stringify(payload),
+			success: function(result) {
+				get_fav();
+			}
+		});
+	}
+	
 
 	var bc_bandmap = new BroadcastChannel('qso_window');
 	bc_bandmap.onmessage = function (ev) {
@@ -307,41 +383,45 @@ $(document).on('change', 'input', function(){
 
 function changebadge(entityname) {
 	if($("#sat_name" ).val() != "") {
-		$.getJSON('logbook/jsonlookupdxcc/' + convert_case(entityname) + '/SAT/0/0', function(result)
+		$.getJSON(base_url + 'index.php/logbook/jsonlookupdxcc/' + convert_case(entityname) + '/SAT/0/0', function(result)
 		{
 
+			$('#callsign_info').removeClass("lotw_info_orange");
 			$('#callsign_info').removeClass("badge-secondary");
 			$('#callsign_info').removeClass("badge-success");
 			$('#callsign_info').removeClass("badge-danger");
 			$('#callsign_info').attr('title', '');
 
-			if (result.workedBefore)
-			{
+			if (result.confirmed) {
 				$('#callsign_info').addClass("badge-success");
+				$('#callsign_info').attr('title', 'DXCC was already worked and confirmed in the past on this band and mode!');
+			} else if (result.workedBefore) {
+				$('#callsign_info').addClass("badge-success");
+				$('#callsign_info').addClass("lotw_info_orange");
 				$('#callsign_info').attr('title', 'DXCC was already worked in the past on this band and mode!');
-			}
-			else
-			{
+			} else {
 				$('#callsign_info').addClass("badge-danger");
 				$('#callsign_info').attr('title', 'New DXCC, not worked on this band and mode!');
 			}
 		})
 	} else {
-		$.getJSON('logbook/jsonlookupdxcc/' + convert_case(entityname) + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
+		$.getJSON(base_url + 'index.php/logbook/jsonlookupdxcc/' + convert_case(entityname) + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
 		{
 			// Reset CSS values before updating
+			$('#callsign_info').removeClass("lotw_info_orange");
 			$('#callsign_info').removeClass("badge-secondary");
 			$('#callsign_info').removeClass("badge-success");
 			$('#callsign_info').removeClass("badge-danger");
 			$('#callsign_info').attr('title', '');
 
-			if (result.workedBefore)
-			{
+			if (result.confirmed) {
 				$('#callsign_info').addClass("badge-success");
+				$('#callsign_info').attr('title', 'DXCC was already worked and confirmed in the past on this band and mode!');
+			} else if (result.workedBefore) {
+				$('#callsign_info').addClass("badge-success");
+				$('#callsign_info').addClass("lotw_info_orange");
 				$('#callsign_info').attr('title', 'DXCC was already worked in the past on this band and mode!');
-			}
-			else
-			{
+			} else {
 				$('#callsign_info').addClass("badge-danger");
 				$('#callsign_info').attr('title', 'New DXCC, not worked on this band and mode!');
 			}
@@ -369,8 +449,10 @@ function reset_fields() {
 	$('#locator').val("");
 	$('#iota_ref').val("");
 	$('#sota_ref').val("");
+	$("#locator").removeClass("confirmedGrid");
 	$("#locator").removeClass("workedGrid");
 	$("#locator").removeClass("newGrid");
+	$("#callsign").removeClass("confirmedGrid");
 	$("#callsign").removeClass("workedGrid");
 	$("#callsign").removeClass("newGrid");
 	$('#callsign_info').removeClass("badge-secondary");
@@ -423,10 +505,11 @@ $("#callsign").focusout(function() {
 
 		var find_callsign = $(this).val().toUpperCase();
 
-		find_callsign.replace(/\//g, "-");
+		find_callsign=find_callsign.replace(/\//g, "-");
+		find_callsign=find_callsign.replace('Ø', '0');
 
 		// Replace / in a callsign with - to stop urls breaking
-		$.getJSON('logbook/json/' + find_callsign.replace(/\//g, "-") + '/' + sat_type + '/' + json_band + '/' + json_mode + '/' + $('#stationProfile').val(), function(result)
+		$.getJSON(base_url + 'index.php/logbook/json/' + find_callsign + '/' + sat_type + '/' + json_band + '/' + json_mode + '/' + $('#stationProfile').val(), function(result)
 		{
 
 			// Make sure the typed callsign and json result match
@@ -439,17 +522,23 @@ $("#callsign").focusout(function() {
 					$('#country').val(convert_case(result.dxcc.entity));
 					$('#callsign_info').text(convert_case(result.dxcc.entity));
 
+					var callsign = find_callsign.replace(/\//g, "-");
+					callsign = callsign.replace('Ø', '0');
+
 					if($("#sat_name" ).val() != "") {
 						//logbook/jsonlookupgrid/io77/SAT/0/0
-						$.getJSON('logbook/jsonlookupcallsign/' + find_callsign.replace(/\//g, "-") + '/SAT/0/0', function(result)
+						$.getJSON(base_url + 'index.php/logbook/jsonlookupcallsign/' + find_callsign + '/SAT/0/0', function(result)
 						{
 							// Reset CSS values before updating
 							$('#callsign').removeClass("workedGrid");
+							$('#callsign').removeClass("confirmedGrid");
 							$('#callsign').removeClass("newGrid");
 							$('#callsign').attr('title', '');
 
-							if (result.workedBefore)
-							{
+							if (result.confirmed) {
+								$('#callsign').addClass("confirmedGrid");
+								$('#callsign').attr('title', 'Callsign was already worked and confirmed in the past on this band and mode!');
+							} else if (result.workedBefore) {
 								$('#callsign').addClass("workedGrid");
 								$('#callsign').attr('title', 'Callsign was already worked in the past on this band and mode!');
 							}
@@ -460,23 +549,25 @@ $("#callsign").focusout(function() {
 							}
 						})
 					} else {
-						$.getJSON('logbook/jsonlookupcallsign/' + find_callsign.replace(/\//g, "-") + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
+						$.getJSON(base_url + 'index.php/logbook/jsonlookupcallsign/' + find_callsign + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
 						{
 							// Reset CSS values before updating
+							$('#callsign').removeClass("confirmedGrid");
 							$('#callsign').removeClass("workedGrid");
 							$('#callsign').removeClass("newGrid");
 							$('#callsign').attr('title', '');
 
-							if (result.workedBefore)
-							{
+							if (result.confirmed) {
+								$('#callsign').addClass("confirmedGrid");
+								$('#callsign').attr('title', 'Callsign was already worked and confirmed in the past on this band and mode!');
+							} else if (result.workedBefore) {
 								$('#callsign').addClass("workedGrid");
 								$('#callsign').attr('title', 'Callsign was already worked in the past on this band and mode!');
-							}
-							else
-							{
+							} else {
 								$('#callsign').addClass("newGrid");
 								$('#callsign').attr('title', 'New Callsign!');
 							}
+
 						})
 					}
 
@@ -495,6 +586,8 @@ $("#callsign").focusout(function() {
 					} else if (result.lotw_days > 7) {
 						$('#lotw_info').addClass('lotw_info_yellow');
 					}
+					$('#lotw_link').attr('href',"https://lotw.arrl.org/lotwuser/act?act="+find_callsign);
+					$('#lotw_link').attr('target',"_blank");
 					$('#lotw_info').attr('data-toggle',"tooltip");
 					$('#lotw_info').attr('data-original-title',"LoTW User. Last upload was "+result.lotw_days+" days ago");
 					$('[data-toggle="tooltip"]').tooltip();
@@ -507,7 +600,7 @@ $("#callsign").focusout(function() {
 				var $dok_select = $('#darc_dok').selectize();
 				var dok_selectize = $dok_select[0].selectize;
 				if (result.dxcc.adif == '230') {
-					$.get('lookup/dok/' + $('#callsign').val().toUpperCase(), function(result) {
+					$.get(base_url + 'index.php/lookup/dok/' + $('#callsign').val().toUpperCase(), function(result) {
 						if (result) {
 							dok_selectize.addOption({name: result});
 							dok_selectize.setValue(result, false);
@@ -554,20 +647,19 @@ $("#callsign").focusout(function() {
 
 					if (result.callsign_qra != "")
 					{
-						if (result.workedBefore)
-						{
+						if (result.confirmed) {
+							$('#locator').addClass("confirmedGrid");
+							$('#locator').attr('title', 'Grid was already worked and confirmed in the past');
+						} else if (result.workedBefore) {
 							$('#locator').addClass("workedGrid");
 							$('#locator').attr('title', 'Grid was already worked in the past');
-						}
-						else
-						{
+						} else {
 							$('#locator').addClass("newGrid");
 							$('#locator').attr('title', 'New grid!');
 						}
-					}
-					else
-					{
+					} else {
 						$('#locator').removeClass("workedGrid");
+						$('#locator').removeClass("confirmedGrid");
 						$('#locator').removeClass("newGrid");
 						$('#locator').attr('title', '');
 					}
@@ -634,7 +726,7 @@ $("#callsign").focusout(function() {
 // Only set the frequency when not set by userdata/PHP.
 if ($('#frequency').val() == "")
 {
-	$.get('qso/band_to_freq/' + $('#band').val() + '/' + $('.mode').val(), function(result) {
+	$.get(base_url + 'index.php/qso/band_to_freq/' + $('#band').val() + '/' + $('.mode').val(), function(result) {
 		$('#frequency').val(result);
 		$('#frequency_rx').val("");
 	});
@@ -663,7 +755,7 @@ $('#start_date').change(function() {
 
 /* on mode change */
 $('.mode').change(function() {
-	$.get('qso/band_to_freq/' + $('#band').val() + '/' + $('.mode').val(), function(result) {
+	$.get(base_url + 'index.php/qso/band_to_freq/' + $('#band').val() + '/' + $('.mode').val(), function(result) {
 		$('#frequency').val(result);
 		$('#frequency_rx').val("");
 	});
@@ -672,7 +764,7 @@ $('.mode').change(function() {
 /* Calculate Frequency */
 /* on band change */
 $('#band').change(function() {
-	$.get('qso/band_to_freq/' + $(this).val() + '/' + $('.mode').val(), function(result) {
+	$.get(base_url + 'index.php/qso/band_to_freq/' + $(this).val() + '/' + $('.mode').val(), function(result) {
 		$('#frequency').val(result);
 		$('#frequency_rx').val("");
 	});
@@ -692,68 +784,104 @@ $("#locator").keyup(function(){
 
 				//logbook/jsonlookupgrid/io77/SAT/0/0
 
-				$.getJSON('logbook/jsonlookupgrid/' + qra_lookup.toUpperCase() + '/SAT/0/0', function(result)
+				$.getJSON(base_url + 'index.php/logbook/jsonlookupgrid/' + qra_lookup.toUpperCase() + '/SAT/0/0', function(result)
 				{
 					// Reset CSS values before updating
+					$('#locator').removeClass("confirmedGrid");
 					$('#locator').removeClass("workedGrid");
 					$('#locator').removeClass("newGrid");
 					$('#locator').attr('title', '');
 
-					if (result.workedBefore)
-					{
+					if (result.confirmed) {
+						$('#locator').addClass("confirmedGrid");
+						$('#locator').attr('title', 'Grid was already worked and confirmed in the past');
+					} else if (result.workedBefore) {
 						$('#locator').addClass("workedGrid");
 						$('#locator').attr('title', 'Grid was already worked in the past');
-					}
-					else
-					{
+					} else {
 						$('#locator').addClass("newGrid");
 						$('#locator').attr('title', 'New grid!');
 					}
 				})
 			} else {
-				$.getJSON('logbook/jsonlookupgrid/' + qra_lookup.toUpperCase() + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
+				$.getJSON(base_url + 'index.php/logbook/jsonlookupgrid/' + qra_lookup.toUpperCase() + '/0/' + $("#band").val() +'/' + $("#mode").val(), function(result)
 				{
 					// Reset CSS values before updating
+					$('#locator').removeClass("confirmedGrid");
 					$('#locator').removeClass("workedGrid");
 					$('#locator').removeClass("newGrid");
 					$('#locator').attr('title', '');
-
-					if (result.workedBefore)
-					{
+					
+					if (result.confirmed) {
+						$('#locator').addClass("confirmedGrid");
+						$('#locator').attr('title', 'Grid was already worked and confimred in the past');
+					} else if (result.workedBefore) {
 						$('#locator').addClass("workedGrid");
 						$('#locator').attr('title', 'Grid was already worked in the past');
-					}
-					else
-					{
+					} else {
 						$('#locator').addClass("newGrid");
 						$('#locator').attr('title', 'New grid!');
 					}
+
 				})
 			}
 		}
 
 		if(qra_input.length >= 4 && $(this).val().length > 0) {
-			$.getJSON('logbook/qralatlngjson/' + $(this).val(), function(result)
-			{
-				// Set Map to Lat/Long
-				markers.clearLayers();
-				if (typeof result !== "undefined") {
-					var redIcon = L.icon({
-						iconUrl: icon_dot_url,
-						iconSize:     [18, 18], // size of the icon
-					});
+			$.ajax({
+				url: base_url + 'index.php/logbook/qralatlngjson',
+				type: 'post',
+				data: {
+					qra: $(this).val(),
+				},
+				success: function(data) {
+					// Set Map to Lat/Long
+					result = JSON.parse(data);
+					markers.clearLayers();
+					if (typeof result[0] !== "undefined" && typeof result[1] !== "undefined") {
+						var redIcon = L.icon({
+							iconUrl: icon_dot_url,
+							iconSize:     [18, 18], // size of the icon
+						});
 
-					var marker = L.marker([result[0], result[1]], {icon: redIcon});
-					mymap.setZoom(8);
-					mymap.panTo([result[0], result[1]]);
-					mymap.setView([result[0], result[1]], 8);
-				}
-				markers.addLayer(marker).addTo(mymap);
-			})
+						var marker = L.marker([result[0], result[1]], {icon: redIcon});
+						mymap.setZoom(8);
+						mymap.panTo([result[0], result[1]]);
+						mymap.setView([result[0], result[1]], 8);
+					   markers.addLayer(marker).addTo(mymap);
+					}
+				},
+				error: function() {
+				},
+			});
 
-			$('#locator_info').load("logbook/searchbearing/" + $(this).val() + "/" + $('#stationProfile').val()).fadeIn("slow");
-			$.get('logbook/searchdistance/' + $(this).val() + "/" + $('#stationProfile').val(), function(result) {
-				document.getElementById("distance").value = result;
+			$.ajax({
+				url: base_url + 'index.php/logbook/searchbearing',
+				type: 'post',
+				data: {
+					grid: $(this).val(),
+					stationProfile: $('#stationProfile').val()
+				},
+				success: function(data) {
+					$('#locator_info').html(data).fadeIn("slow");
+				},
+				error: function() {
+					$('#locator_info').text("Error loading bearing!").fadeIn("slow");
+				},
+			});
+			$.ajax({
+				url: base_url + 'index.php/logbook/searchdistance',
+				type: 'post',
+				data: {
+					grid: $(this).val(),
+					stationProfile: $('#stationProfile').val()
+				},
+				success: function(data) {
+					document.getElementById("distance").value = data;
+				},
+				error: function() {
+					document.getElementById("distance").value = null;
+				},
 			});
 		}
 	}
@@ -772,7 +900,7 @@ function convert_case(str) {
 }
 
 $('#dxcc_id').on('change', function() {
-	$.getJSON('logbook/jsonentity/' + $(this).val(), function (result) {
+	$.getJSON(base_url + 'index.php/logbook/jsonentity/' + $(this).val(), function (result) {
 		if (result.dxcc.name != undefined) {
 
 			$('#country').val(convert_case(result.dxcc.name));
@@ -816,11 +944,12 @@ $("#callsign").on("keypress", function(e) {
 $("#callsign").keyup(function() {
 	if ($(this).val().length >= 3) {
 	  $('.callsign-suggest').show();
+	  $callsign = $(this).val().replace('Ø', '0');
 	  $.ajax({
 		url: 'lookup/scp',
 		method: 'POST',
 		data: {
-		  callsign: $(this).val().toUpperCase()
+		  callsign: $callsign.toUpperCase()
 		},
 		success: function(result) {
 		  $('.callsign-suggestions').text(result);
@@ -843,8 +972,10 @@ function resetDefaultQSOFields() {
 	$('#iota_ref').val("");
 	$('#sota_ref').val("");
 	$("#locator").removeClass("workedGrid");
+	$("#locator").removeClass("confirmedGrid");
 	$("#locator").removeClass("newGrid");
 	$("#callsign").removeClass("workedGrid");
+	$("#callsign").removeClass("confirmedGrid");
 	$("#callsign").removeClass("newGrid");
 	$('#callsign_info').removeClass("badge-secondary");
 	$('#callsign_info').removeClass("badge-success");

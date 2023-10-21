@@ -281,7 +281,7 @@
    },
    "IO-117":{
       "Modes":{
-         "U":[
+         "U/U":[
             {
                "Uplink_Mode":"PKT",
                "Uplink_Freq":"435310000",
@@ -299,6 +299,18 @@
                "Uplink_Freq":"435110000",
                "Downlink_Mode":"USB",
                "Downlink_Freq":"145865000"
+            }
+         ]
+      }
+   },
+   "LEDSAT":{
+      "Modes":{
+         "U/U":[
+            {
+               "Uplink_Mode":"PKT",
+               "Uplink_Freq":"435310000",
+               "Downlink_Mode":"PKT",
+               "Downlink_Freq":"435190000"
             }
          ]
       }
@@ -543,6 +555,18 @@
                "Uplink_Freq":"145925000",
                "Downlink_Mode":"FM",
                "Downlink_Freq":"436888000"
+            }
+         ]
+      }
+   },
+   "INSPIRE-SAT 7":{
+      "Modes":{
+         "V/U":[
+            {
+               "Uplink_Mode":"FM",
+               "Uplink_Freq":"145970000",
+               "Downlink_Mode":"FM",
+               "Downlink_Freq":"437410000"
             }
          ]
       }

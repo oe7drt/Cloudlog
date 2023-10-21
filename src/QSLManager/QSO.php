@@ -38,7 +38,6 @@ class QSO
 	private string $iota;
 	/** @var string[] */
 	private string $deVUCCGridsquares;
-	private string $stationGridsquare;
 	private string $dxGridsquare;
 	private string $dxIOTA;
 	private string $dxSig;
@@ -117,7 +116,6 @@ class QSO
 			'COL_STATE',
 			'COL_COUNTRY',
 			'COL_IOTA',
-			'name'
 		];
 
 
@@ -157,16 +155,14 @@ class QSO
 		$this->email = $data['COL_EMAIL'] ?? '';
 		$this->address = $data['COL_ADDRESS'] ?? '';
 
-		$this->deGridsquare = $data['COL_MY_GRIDSQUARE'] ?? '';
-		$this->deIOTA = $data['COL_MY_IOTA'] ?? '';
-		$this->deSig = $data['COL_MY_SIG'] ?? '';
-		$this->deSigInfo = $data['COL_MY_SIG_INFO'] ?? '';
+		$this->deGridsquare = $data['station_gridsquare'] ?? '';
+		$this->deIOTA = $data['station_iota'] ?? '';
+		$this->deSig = $data['station_sig'] ?? '';
+		$this->deSigInfo = $data['station_sig_info'] ?? '';
 		$this->deIOTAIslandID = $data['COL_MY_IOTA_ISLAND_ID'] ?? '';
-		$this->deSOTAReference = $data['COL_MY_SOTA_REF'] ?? '';
+		$this->deSOTAReference = $data['station_sota'] ?? '';
 
 		$this->deVUCCGridsquares = $data['COL_MY_VUCC_GRIDS'] ?? '';
-
-		$this->stationGridsquare = $data['station_gridsquare'] ?? '';
 
 		$this->dxGridsquare = $data['COL_GRIDSQUARE'] ?? '';
 		$this->dxIOTA = $data['COL_IOTA'] ?? '';
@@ -196,16 +192,16 @@ class QSO
 
 		$this->cqzone = ($data['COL_CQZ'] === null) ? '' : '<a href="javascript:spawnLookupModal('.$data['COL_CQZ'].',\'cq\');">'.$data['COL_CQZ'].'</a>';
 		$this->state = ($data['COL_STATE'] === null) ? '' :$data['COL_STATE'];
-		$this->dxcc = ($data['name'] === null) ? '- NONE -' : '<a href="javascript:spawnLookupModal('.$data['COL_DXCC'].',\'dxcc\');">'.ucwords(strtolower($data['name']), "- (/").'</a>';
+		$this->dxcc = (($data['name'] ?? null) === null) ? '- NONE -' : '<a href="javascript:spawnLookupModal('.$data['COL_DXCC'].',\'dxcc\');">'.ucwords(strtolower($data['name']), "- (/").'</a>';
 		$this->iota = ($data['COL_IOTA'] === null) ? '' : $this->getIotaLink($data['COL_IOTA']);
 		if (array_key_exists('end', $data)) {
 			$this->end = ($data['end'] === null) ? null : DateTime::createFromFormat("Y-m-d", $data['end'], new DateTimeZone('UTC'));
 		} else {
 			$this->end = null;
 		}
-		$this->callsign = ($data['callsign'] === null) ? '' :$data['callsign'];
-		$this->lastupload = ($data['lastupload'] === null) ? '' : date($custom_date_format . " H:i", strtotime($data['lastupload']));
-		$this->lotw_hint = $this->getLotwHint($data['lastupload']);
+		$this->callsign = (($data['callsign'] ?? null) === null) ? '' : $data['callsign'];
+		$this->lastupload = (($data['lastupload'] ?? null) === null) ? '' : date($custom_date_format . " H:i", strtotime($data['lastupload'] ?? null));
+		$this->lotw_hint = $this->getLotwHint($data['lastupload'] ?? null);
 	}
 
 	/**
@@ -323,7 +319,7 @@ class QSO
 				}
 			}
 			$qslstring .= '">&#9660;</span>';
-			if ($data['qslcount'] != null) {
+			if ($data['qslcount'] ?? null != null) {
 				$qslstring .= ' <a href="javascript:displayQsl('.$data['COL_PRIMARY_KEY'].');"><i class="fa fa-id-card"></i></a>';
 			}
 		return $qslstring;
@@ -863,9 +859,9 @@ class QSO
 	{
 		$refs = [];
 		if ($this->dxVUCCGridsquares !== '') {
-			$refs[] = '<span id="dxgrid">' . $this->dxVUCCGridsquares . '</span> ' .$this->getQrbLink($this->stationGridsquare, $this->dxVUCCGridsquares, $this->dxGridsquare);
+			$refs[] = '<span id="dxgrid">' . $this->dxVUCCGridsquares . '</span> ' .$this->getQrbLink($this->deGridsquare, $this->dxVUCCGridsquares, $this->dxGridsquare);
 		} else if ($this->dxGridsquare !== '') {
-			$refs[] = '<span id="dxgrid">' . $this->dxGridsquare . '</span> ' .$this->getQrbLink($this->stationGridsquare, $this->dxVUCCGridsquares, $this->dxGridsquare);
+			$refs[] = '<span id="dxgrid">' . $this->dxGridsquare . '</span> ' .$this->getQrbLink($this->deGridsquare, $this->dxVUCCGridsquares, $this->dxGridsquare);
 		}
 		if ($this->dxSOTAReference !== '') {
 			$refs[] = "SOTA: " . '<span id="dxsota">' . $this->dxSOTAReference. '</span>';

@@ -152,9 +152,33 @@ function qso_edit(id) {
 
                     $('#locator').change(function(){
                         if ($(this).val().length >= 4) {
-                            $('#locator_info').load("logbook/searchbearing/" + $(this).val() + "/" + $('#stationProfile').val()).fadeIn("slow");
-                            $.get('logbook/searchdistance/' + $(this).val() + "/" + $('#stationProfile').val(), function(result) {
-                                document.getElementById("distance").value = result;
+                            $.ajax({
+                               url: base_url + 'index.php/logbook/searchbearing',
+                               type: 'post',
+                               data: {
+                                  grid: $(this).val(),
+                                  stationProfile: $('#stationProfile').val()
+                               },
+                               success: function(data) {
+                                  $('#locator_info').html(data).fadeIn("slow");
+                               },
+                               error: function() {
+                                  $('#locator_info').text("Error loading bearing!").fadeIn("slow");
+                               },
+                            });
+                            $.ajax({
+                               url: base_url + 'index.php/logbook/searchdistance',
+                               type: 'post',
+                               data: {
+                                  grid: $(this).val(),
+                                  stationProfile: $('#stationProfile').val()
+                               },
+                               success: function(data) {
+                                  document.getElementById("distance").value = data;
+                               },
+                               error: function() {
+                                  document.getElementById("distance").value = null;
+                               },
                             });
                         }
                     });
@@ -345,13 +369,13 @@ function calculateQrb() {
             data: {'locator1': locator1,
                     'locator2': locator2},
             success: function (html) {
-                
+
                 var result = "<h5>Negative latitudes are south of the equator, negative longitudes are west of Greenwich. <br/>";
                 result += ' ' + locator1.toUpperCase() + ' Latitude = ' + html['latlng1'][0] + ' Longitude = ' + html['latlng1'][1] + '<br/>';
                 result += ' ' + locator2.toUpperCase() + ' Latitude = ' + html['latlng2'][0] + ' Longitude = ' + html['latlng2'][1] + '<br/>';
                 result += 'Distance between ' + locator1.toUpperCase() + ' and ' + locator2.toUpperCase() + ' is ' + html['distance'] + '.<br />';
                 result += 'The bearing is ' + html['bearing'] + '.</h5>';
-                
+
                 $(".qrbResult").html(result);
                 newpath(html['latlng1'], html['latlng2'], locator1, locator2);
             }
@@ -362,10 +386,14 @@ function calculateQrb() {
 }
 
 function validateLocator(locator) {
+    vucc_gridno = locator.split(",").length;
+    if(vucc_gridno == 3 || vucc_gridno > 4) {
+        return false;
+    }
     if(locator.length < 4 && !(/^[a-rA-R]{2}[0-9]{2}[a-xA-X]{0,2}[0-9]{0,2}[a-xA-X]{0,2}$/.test(locator))) {
         return false;
     }
-    
+
     return true;
 }
 

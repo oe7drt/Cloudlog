@@ -74,7 +74,7 @@
 			<option value="All">All</option>
                     <?php
                     foreach($modes as $mode){
-                        if ($mode->submode == null) {
+                        if ($mode->submode ?? '' == '') {
                             echo '<option value="' . $mode . '">' . strtoupper($mode) . '</option>'."\n";
                         }
                     }
@@ -136,6 +136,7 @@
         <div class="cohidden col-auto text-success font-weight-bold" id="bearing"></div>
 </div>
 <script>var gridsquaremap = true;
+var type = "worked";
 <?php
     echo 'var jslayer ="' . $layer .'";';
     echo "var jsattribution ='" . $attribution . "';";

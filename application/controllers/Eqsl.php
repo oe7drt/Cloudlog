@@ -69,6 +69,7 @@ class eqsl extends CI_Controller {
 				redirect('eqsl/import');
 			}
 
+			$eqsl_force_from_date = (!$this->input->post('eqsl_force_from_date')=="")?$this->input->post('eqsl_force_from_date'):"";
 			foreach ($eqsl_locations->result_array() as $eqsl_location) {
 				$this->eqslimporter->from_callsign_and_QTH(
 					$eqsl_location['station_callsign'],
@@ -76,7 +77,7 @@ class eqsl extends CI_Controller {
 					$config['upload_path']
 				);
 
-				$eqsl_results[] = $this->eqslimporter->fetch($eqsl_password);
+				$eqsl_results[] = $this->eqslimporter->fetch($eqsl_password,$eqsl_force_from_date);
 			}
 		} elseif ($this->input->post('eqslimport') == 'upload') {
 			$station_id4upload=$this->input->post('station_profile');
@@ -277,13 +278,13 @@ class eqsl extends CI_Controller {
 		return $table;
 	}
 
-	// Build out the ADIF info string according to specs http://eqsl.cc/qslcard/ADIFContentSpecs.cfm
+	// Build out the ADIF info string according to specs https://eqsl.cc/qslcard/ADIFContentSpecs.cfm
 	function generateAdif($qsl, $data) {
 		$COL_QSO_DATE = date('Ymd',strtotime($qsl['COL_TIME_ON']));
 		$COL_TIME_ON = date('Hi',strtotime($qsl['COL_TIME_ON']));
 		
 		# Set up the single record file
-		$adif = "http://www.eqsl.cc/qslcard/importADIF.cfm?";
+		$adif = "https://www.eqsl.cc/qslcard/importADIF.cfm?";
 		$adif .= "ADIFData=CloudlogUpload%20";
 		
 		/* Handy reference of escaping chars
@@ -463,7 +464,7 @@ class eqsl extends CI_Controller {
 	}
 
 	function writeEqslNotSent($qslsnotsent, $custom_date_format) {
-		$table = '<table = style="width:100%" class="table-sm table table-bordered table-hover table-striped table-condensed text-center">';
+		$table = '<table = style="width:100%" class="table-sm table qsotable table-bordered table-hover table-striped table-condensed text-center">';
 			$table .= "<thead><tr class=\"titles\">";
 				$table .= "<th>Date</th>";
 				$table .= "<th>Time</th>";
@@ -755,7 +756,7 @@ class eqsl extends CI_Controller {
 		foreach($dir_array as $key=>$filename){
 			if($filename!=".." && $filename!="."){
 				if(is_dir($dir."/".$filename)){
-					$new_foldersize = foldersize($dir."/".$filename);
+					$new_foldersize = $this->foldersize($dir."/".$filename);
 					$count_size = $count_size+ $new_foldersize;
 				}else if(is_file($dir."/".$filename)){
 					$count_size = $count_size + filesize($dir."/".$filename);

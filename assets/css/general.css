@@ -144,8 +144,12 @@ thead > tr > td {
     text-transform: uppercase;
 }
 
-.workedGrid {
+.confirmedGrid {
     border-color: green;
+}
+
+.workedGrid {
+    border-color: yellow;
 }
 
 .newGrid {
@@ -507,4 +511,29 @@ div#station_logbooks_linked_table_paginate {
 
 .highcharts-data-table tr:hover {
     background: #f1f7ff;
+}
+
+#radio_cat_state {
+    margin-bottom: 10px;
+}
+
+.previous-qsos table {
+    margin-bottom: 0px;
+}
+
+#advancedmap {
+	height: calc(100vh - 280px) !important;
+	max-height: 1000px !important;
+}
+
+.lotw-cert-list table {
+    margin-bottom: 0px;
+}
+
+.qso_panel a i.fa.fa-star:hover {
+    color: #FFD700 !important;
+}
+
+#dx, #state, #gridsquare, #sota, #wwff, #pota {
+    text-transform: uppercase;
 }

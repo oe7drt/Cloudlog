@@ -34,7 +34,17 @@
           <li class="nav-item">
             <a class="nav-link" id="qsl-tab" data-toggle="tab" href="#qsl" role="tab" aria-controls="qsl" aria-selected="false"><?php echo lang('gen_hamradio_qsl'); ?></a>
           </li>
-        </ul>
+	
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" id="fav_item" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-star"></i></a>
+    <div class="dropdown-menu">
+      <a class="dropdown-item" href="#" id="fav_add"><?php echo lang('fav_add'); ?></a>
+      <div class="dropdown-divider"></div>
+      <div id="fav_menu"></div>
+    </div>
+  </li>
+
+	        </ul>
       </div>
 
       <div class="card-body">
@@ -65,7 +75,7 @@
                 <div class="form-group col-md-9">
                   <label for="callsign"><?php echo lang('gen_hamradio_callsign'); ?></label><?php if ($this->optionslib->get_option('dxcache_url') != '') { ?>&nbsp;<i id="check_cluster" data-toggle="tooltip" data-original-title="Search DXCluster for latest Spot" class="fas fa-search"></i> <?php } ?>
                   <input type="text" class="form-control" id="callsign" name="callsign" required>
-                  <small id="callsign_info" class="badge badge-secondary"></small> <small id="lotw_info" class="badge badge-success"></small>
+                  <small id="callsign_info" class="badge badge-secondary"></small> <a id="lotw_link"><small id="lotw_info" class="badge badge-success"></small></a>
                 </div>
                 <div class="form-group col-md-3 align-self-center">
                   <small id="qrz_info" class="badge badge-secondary"></small>
@@ -211,7 +221,13 @@
               <input type="number" step="0.001" class="form-control" id="transmit_power" name="transmit_power" value="<?php if ($this->session->userdata('transmit_power')) { echo $this->session->userdata('transmit_power'); } else { echo $power; } ?>" />
               <small id="powerHelp" class="form-text text-muted"><?php echo lang('qso_transmit_power_helptext'); ?></small>
             </div>
-          </div>
+
+            <div class="form-group">
+              <label for="operator_callsign"><?php echo lang('qso_operator_callsign'); ?></label>
+              <input type="text" class="form-control" id="operator_callsign" name="operator_callsign" value="<?php if ($this->session->userdata('operator_callsign')) { echo $this->session->userdata('operator_callsign'); } ?>" />
+            </div>
+
+        </div>
 
           <!-- General Items -->
           <div class="tab-pane fade" id="general" role="tabpanel" aria-labelledby="general-tab">
@@ -502,13 +518,13 @@
   <div class="col-sm-7">
 
 <?php if($notice) { ?>
-<div class="alert alert-info" role="alert">
+<div id="notice-alerts" class="alert alert-info" role="alert">
   <?php echo $notice; ?>
 </div>
 <?php } ?>
 
 <?php if(validation_errors()) { ?>
-<div class="alert alert-warning" role="alert">
+<div id="notice-alerts" class="alert alert-warning" role="alert">
   <?php echo validation_errors(); ?>
 </div>
 <?php } ?>
@@ -517,6 +533,8 @@
     <div class="card qso-map">
             <div id="qsomap" style="width: 100%; height: 200px;"></div>
     </div>
+
+    <div id="radio_status"></div>
 
     <!-- Winkey Starts -->
 
@@ -579,70 +597,8 @@
 
         <div id="partial_view" style="font-size: 0.95rem;"></div>
 
-        <div id="qso-last-table">
+        <div id="qso-last-table" hx-get="<?php echo site_url('/qso/component_past_contacts'); ?>"  hx-trigger="load, every 5s">
 
-          <div class="table-responsive" style="font-size: 0.95rem;">
-            <table class="table">
-              <tr class="log_title titles">
-                <td><?php echo lang('general_word_date'); ?>/<?php echo lang('general_word_time'); ?></td>
-                <td><?php echo lang('gen_hamradio_call'); ?></td>
-                <td><?php echo lang('gen_hamradio_mode'); ?></td>
-                <td><?php echo lang('gen_hamradio_rsts'); ?></td>
-                <td><?php echo lang('gen_hamradio_rstr'); ?></td>
-                <?php if ($this->session->userdata('user_column1')=='Frequency' || $this->session->userdata('user_column2')=='Frequency' || $this->session->userdata('user_column3')=='Frequency' || $this->session->userdata('user_column4')=='Frequency' || $this->session->userdata('user_column5')=='Frequency') {
-                         echo '<td>'.lang('gen_hamradio_frequency').'</td>';
-                      } else {
-                         echo '<td>'.lang('gen_hamradio_band').'</td>';
-                      }
-                ?>
-              </tr>
-
-              <?php
-
-			  // Get Date format
-			  if($this->session->userdata('user_date_format')) {
-				  // If Logged in and session exists
-				  $custom_date_format = $this->session->userdata('user_date_format');
-			  } else {
-				  // Get Default date format from /config/cloudlog.php
-				  $custom_date_format = $this->config->item('qso_date_format');
-			  }
-
-			  $i = 0;
-            if($query != false) {
-            foreach ($query->result() as $row) {
-              	echo '<tr class="tr'.($i & 1).'">';
-                    echo '<td>';
-						$timestamp = strtotime($row->COL_TIME_ON);
-						echo date($custom_date_format, $timestamp);
-						echo date(' H:i',strtotime($row->COL_TIME_ON));
-					?>
-				  </td>
-                  <td>
-                      <a id="edit_qso" href="javascript:displayQso(<?php echo $row->COL_PRIMARY_KEY; ?>)"><?php echo str_replace("0","&Oslash;",strtoupper($row->COL_CALL)); ?></a>
-                  </td>
-                    <td><?php echo $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE; ?></td>
-                    <td><?php echo $row->COL_RST_SENT; ?></td>
-                    <td><?php echo $row->COL_RST_RCVD; ?></td>
-                    <?php if($row->COL_SAT_NAME != null) { ?>
-                    <td><?php echo $row->COL_SAT_NAME; ?></td>
-                    <?php } else {
-                              if ($this->session->userdata('user_column1')=='Frequency' || $this->session->userdata('user_column2')=='Frequency' || $this->session->userdata('user_column3')=='Frequency' || $this->session->userdata('user_column4')=='Frequency' || $this->session->userdata('user_column5')=='Frequency') {
-                                 echo '<td>';
-                                 if ($row->COL_FREQ != null) {
-                                    echo $this->frequency->hz_to_mhz($row->COL_FREQ);
-                                 } else {
-                                    echo $row->COL_BAND;
-                                 }
-                                 echo '</td>';
-                              } else {
-                                 echo '<td>'.$row->COL_BAND.'</td>';
-                              }
-                          } ?>
-                  </tr>
-              <?php $i++; } } ?>
-            </table>
-          </div>
         </div>
       </div>
     </div>

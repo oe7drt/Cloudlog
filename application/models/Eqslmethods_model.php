@@ -149,13 +149,13 @@ class Eqslmethods_model extends CI_Model {
         } else {
             // No previous date (first time import has run?), so choose UNIX EPOCH!
             // Note: date is yyyy/mm/dd format
-            return '1970/01/01';
+            return '19700101';
         }
     }
 
     // Update a QSO with eQSL QSL info
-    // We could also probably use this use this: http://eqsl.cc/qslcard/VerifyQSO.txt
-    // http://www.eqsl.cc/qslcard/ImportADIF.txt
+    // We could also probably use this use this: https://eqsl.cc/qslcard/VerifyQSO.txt
+    // https://www.eqsl.cc/qslcard/ImportADIF.txt
     function eqsl_update($datetime, $callsign, $band, $mode, $qsl_status,$station_callsign) {
         $data = array(
             'COL_EQSL_QSLRDATE' => date('Y-m-d H:i:s'), // eQSL doesn't give us a date, so let's use current

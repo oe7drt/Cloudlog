@@ -354,7 +354,7 @@
 
                 <?php } ?>
                     <?php if($row->lotwuser != null) { ?>
-                    <br /><p><?php echo lang('lotw_user'); ?> <?php $timestamp = strtotime($row->lastupload); echo date($custom_date_format, $timestamp); $timestamp = strtotime($row->lastupload); echo " at ".date('H:i', $timestamp);?> UTC.</p>
+                    <br /><p><?php echo lang('lotw_user'); ?> <a href="https://lotw.arrl.org/lotwuser/act?act=<?php echo $row->COL_CALL;?>" target="_blank"><?php echo lang('lotw_last_upload').'</a>: '; ?><?php $timestamp = strtotime($row->lastupload); echo date($custom_date_format, $timestamp); $timestamp = strtotime($row->lastupload); echo " ".date('H:i', $timestamp);?> UTC.</p>
                     <?php } ?>
 
                     <?php if($row->COL_LOTW_QSL_RCVD == "Y") { ?>
@@ -400,9 +400,17 @@
                             $hashtags .= " #WWFF ".$row->COL_WWFF_REF;
                         }
                         if (!isset($distance)) {
-                            $twitter_string = urlencode("Just worked ".$row->COL_CALL." in ".ucwords(strtolower(($row->COL_COUNTRY)))." on ".$twitter_band_sat." using ".($row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE)." ".$hashtags);
+                            $twitter_string = urlencode("Just worked ".$row->COL_CALL." ");
+                            if ($row->COL_DXCC != 0) {
+                               $twitter_string .= urlencode("in ".ucwords(strtolower(($row->COL_COUNTRY)))." ");
+                            }
+                            $twitter_string .= urlencode("on ".$twitter_band_sat." using ".($row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE)." ".$hashtags);
                         } else {
-                            $twitter_string = urlencode("Just worked ".$row->COL_CALL." in ".ucwords(strtolower(($row->COL_COUNTRY)))." (Gridsquare: ".$row->COL_GRIDSQUARE." / distance: ".$distance.") on ".$twitter_band_sat." using ".($row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE)." ".$hashtags);
+                            $twitter_string = urlencode("Just worked ".$row->COL_CALL." ");
+                            if ($row->COL_DXCC != 0) {
+                               $twitter_string .= urlencode("in ".ucwords(strtolower(($row->COL_COUNTRY)))." ");
+                            }
+                            $twitter_string .= urlencode("(Gridsquare: ".$row->COL_GRIDSQUARE." / distance: ".$distance.") on ".$twitter_band_sat." using ".($row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE)." ".$hashtags);
                         }
                     ?>
 
