@@ -14,7 +14,7 @@ declare -a CLOUDLOG_SUBDIRS=("application/config" "assets" "backup" "updates" "u
 # The name of the Git remote to fetch/pull from
 GIT_REMOTE="upstream"
 # If true, pull from the HEAD of the configured origin, otherwise the latest tag
-BLEEDING_EDGE="false"
+BLEEDING_EDGE="true"
 # If true, restore directory ownership on CLOUDLOG_SUBDIRS after a git pull
 RESTORE_OWNERSHIP="true"
 
