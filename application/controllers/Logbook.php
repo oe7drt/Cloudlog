@@ -575,6 +575,9 @@ function worked_grid_before($gridsquare, $type, $band, $mode)
 		echo "{\"markers\": [";
 		$count = 1;
 		foreach ($data['qsos']->result() as $row) {
+			// check if qso is confirmed //
+			if (($row->COL_EQSL_QSL_RCVD=='Y') || ($row->COL_LOTW_QSL_RCVD=='Y') || ($row->COL_QSL_RCVD=='Y')) { $row->_is_confirmed = 'Y'; } else { $row->_is_confirmed = 'N'; }
+
 			if($row->COL_GRIDSQUARE != null) {
 				$stn_loc = $this->qra->qra2latlong($row->COL_GRIDSQUARE);
 				if($count != 1) {
@@ -584,11 +587,11 @@ function worked_grid_before($gridsquare, $type, $band, $mode)
 				if($row->COL_SAT_NAME != null) {
 						echo "{\"lat\":\"".$stn_loc[0]."\",\"lng\":\"".$stn_loc[1]."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />SAT: ".$row->COL_SAT_NAME."<br />Mode: ";
 						echo $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE;
-						echo "\",\"label\":\"".$row->COL_CALL."\"}";
+						echo "\",\"label\":\"".$row->COL_CALL."\", \"confirmed\":\"".$row->_is_confirmed."\"}";
 				} else {
 						echo "{\"lat\":\"".$stn_loc[0]."\",\"lng\":\"".$stn_loc[1]."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />Band: ".$row->COL_BAND."<br />Mode: ";
 						echo $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE;
-						echo "\",\"label\":\"".$row->COL_CALL."\"}";
+						echo "\",\"label\":\"".$row->COL_CALL."\", \"confirmed\":\"".$row->_is_confirmed."\"}";
 				}
 
 				$count++;
@@ -625,11 +628,11 @@ function worked_grid_before($gridsquare, $type, $band, $mode)
 				if($row->COL_SAT_NAME != null) {
 					echo "{\"lat\":\"".$stn_loc[0]."\",\"lng\":\"".$stn_loc[1]."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />SAT: ".$row->COL_SAT_NAME."<br />Mode: ";
 					echo $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE;
-					echo "\",\"label\":\"".$row->COL_CALL."\"}";
+					echo "\",\"label\":\"".$row->COL_CALL."\", \"confirmed\":\"".$row->_is_confirmed."\"}";
 				} else {
 					echo "{\"lat\":\"".$stn_loc[0]."\",\"lng\":\"".$stn_loc[1]."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />Band: ".$row->COL_BAND."<br />Mode: ";
 					echo $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE;
-					echo "\",\"label\":\"".$row->COL_CALL."\"}";
+					echo "\",\"label\":\"".$row->COL_CALL."\", \"confirmed\":\"".$row->_is_confirmed."\"}";
 				}
 
 				$count++;
@@ -647,12 +650,18 @@ function worked_grid_before($gridsquare, $type, $band, $mode)
 				}
 				echo "{\"lat\":\"".$lat."\",\"lng\":\"".$lng."\", \"html\":\"Callsign: ".$row->COL_CALL."<br />Date/Time: ".$row->COL_TIME_ON."<br />Band: ".$row->COL_BAND."<br />Mode: ";
 				echo $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE;
-				echo "\",\"label\":\"".$row->COL_CALL."\"}";
+				echo "\",\"label\":\"".$row->COL_CALL."\", \"confirmed\":\"".$row->_is_confirmed."\"}";
 				$count++;
 			}
 
 		}
 		echo "]";
+		
+		// [MAP Custom] ADD Station //
+		$this->load->model('Stations');
+		$station_json = $this->Stations->get_station_json_for_map();
+		echo (!empty($station_json))?', '.$station_json:'';
+
 		echo "}";
 	}
 
@@ -836,7 +845,7 @@ function worked_grid_before($gridsquare, $type, $band, $mode)
 						$html .= "\">&#9660;</span>";
 						$html .= "</td>";
 					}
-					$html .= "<td><span class=\"badge badge-info\">".$row->station_callsign."</span></td>";
+					$html .= "<td><span class=\"badge bg-info\">".$row->station_callsign."</span></td>";
 				$html .= "</tr>";
 			}
 			$html .= "</table>";
@@ -1346,9 +1355,9 @@ function worked_grid_before($gridsquare, $type, $band, $mode)
 		$ci =& get_instance();
 		switch($name) {
 		case 'Mode':    $ret.= '<td>'; $ret.= $row->COL_SUBMODE==null?$row->COL_MODE:$row->COL_SUBMODE . '</td>'; break;
-		case 'RSTS':    $ret.= '<td class="d-none d-sm-table-cell">' . $row->COL_RST_SENT; if ($row->COL_STX) { $ret.= ' <span data-toggle="tooltip" data-original-title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge badge-light">'; $ret.=sprintf("%03d", $row->COL_STX); $ret.= '</span>';} if ($row->COL_STX_STRING) { $ret.= ' <span data-toggle="tooltip" data-original-title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge badge-light">' . $row->COL_STX_STRING . '</span>';} $ret.= '</td>'; break;
-		case 'RSTR':    $ret.= '<td class="d-none d-sm-table-cell">' . $row->COL_RST_RCVD; if ($row->COL_SRX) { $ret.= ' <span data-toggle="tooltip" data-original-title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge badge-light">'; $ret.=sprintf("%03d", $row->COL_SRX); $ret.= '</span>';} if ($row->COL_SRX_STRING) { $ret.= ' <span data-toggle="tooltip" data-original-title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge badge-light">' . $row->COL_SRX_STRING . '</span>';} $ret.= '</td>'; break;
-		case 'Country': $ret.= '<td>' . ucwords(strtolower(($row->COL_COUNTRY))); if ($row->end != NULL) $ret.= ' <span class="badge badge-danger">'.$ci->lang->line('gen_hamradio_deleted_dxcc').'</span>'  . '</td>'; break;
+		case 'RSTS':    $ret.= '<td class="d-none d-sm-table-cell">' . $row->COL_RST_SENT; if ($row->COL_STX) { $ret.= ' <span data-bs-toggle="tooltip" title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge text-bg-light">'; $ret.=sprintf("%03d", $row->COL_STX); $ret.= '</span>';} if ($row->COL_STX_STRING) { $ret.= ' <span data-bs-toggle="tooltip" title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge text-bg-light">' . $row->COL_STX_STRING . '</span>';} $ret.= '</td>'; break;
+		case 'RSTR':    $ret.= '<td class="d-none d-sm-table-cell">' . $row->COL_RST_RCVD; if ($row->COL_SRX) { $ret.= ' <span data-bs-toggle="tooltip" title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge text-bg-light">'; $ret.=sprintf("%03d", $row->COL_SRX); $ret.= '</span>';} if ($row->COL_SRX_STRING) { $ret.= ' <span data-bs-toggle="tooltip" title="'.($row->COL_CONTEST_ID!=""?$row->COL_CONTEST_ID:"n/a").'" class="badge text-bg-light">' . $row->COL_SRX_STRING . '</span>';} $ret.= '</td>'; break;
+		case 'Country': $ret.= '<td>' . ucwords(strtolower(($row->COL_COUNTRY))); if ($row->end != NULL) $ret.= ' <span class="badge text-bg-danger">'.$ci->lang->line('gen_hamradio_deleted_dxcc').'</span>'  . '</td>'; break;
 		case 'IOTA':    $ret.= '<td>' . ($row->COL_IOTA) . '</td>'; break;
 		case 'SOTA':    $ret.= '<td>' . ($row->COL_SOTA_REF) . '</td>'; break;
 		case 'WWFF':    $ret.= '<td>' . ($row->COL_WWFF_REF) . '</td>'; break;
