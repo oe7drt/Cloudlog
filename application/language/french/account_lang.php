@@ -12,7 +12,7 @@ $lang['account_column5_text'] = "Contenu colonne 5 (uniquement pour logbook)";
 $lang['account_create_user_account'] = "Créer un compte";
 $lang['account_edit_account'] = "Editer un compte";
 
-$lang['account_account_information'] = "Informations du compte";
+$lang['account_account_information'] = "Compte";
 $lang['account_user'] = "Compte";
 $lang['account_word_edited'] = "mis à jour";
 $lang['account_username'] = "Utilisateur";
@@ -114,3 +114,14 @@ $lang['account_qsl_settings'] = "Méthode QSL";
 $lang['account_winkeyer'] = "Winkeyer";
 $lang['account_winkeyer_hint'] = "REMARQUE : La prise en charge de Winkeyer dans Cloudlog est très expérimentale, lisez d'abord le wiki avant de l'activer  <a href=\"https://github.com/magicbug/Cloudlog/wiki/Winkey\" target=\"_blank\">https://github.com/magicbug/Cloudlog/wiki/Winkey</a>";
 $lang['account_winkeyer_enabled'] = "Activer Winkeyer";
+
+$lang['account_map_params'] = "Paramètre de la carte";
+$lang['account_map_qso_by_default'] = "QSO (par défaut)";
+$lang['account_map_qso_confirm'] = "QSO (confirmé)";
+$lang['account_map_qso_confirm_same_qso'] = "(Si 'Non', sera affiché comme ".$lang['account_map_qso_by_default'].")";
+
+$lang['account_general_information'] = "Informations Générales";
+$lang['account_qso_logging_options'] = "QSO Logging Options";
+$lang['account_third_party_services'] = "Third Party Services";
+$lang['account_default_values'] = "Valeur par défaut";
+$lang['account_miscellaneous'] = "Divers";
