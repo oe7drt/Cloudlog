@@ -159,11 +159,17 @@ function getDistanceQsos(distance) {
 						"scrollCollapse": true,
 						"paging":         false,
 						"scrollX": true,
+						"language": {
+							url: getDataTablesLanguageUrl(),
+						},
 						dom: 'Bfrtip',
 						buttons: [
 							'csv'
 						]
 					});
+                    $('.table-responsive .dropdown-toggle').off('mouseenter').on('mouseenter', function () {
+                        showQsoActionsMenu($(this).closest('.dropdown'));
+                    });
 				},
 				buttons: [{
 					label: lang_admin_close,
